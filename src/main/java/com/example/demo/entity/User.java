@@ -1,5 +1,6 @@
 package com.example.demo.entity;
 
+import jakarta.validation.constraints.*;
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -13,7 +14,12 @@ public class User {
 
     private String fullName;
 
+    @NotBlank(message = "Email is required")
     @Column(unique = true, nullable = false)
+    @Email(
+        regexp = "^[a-z0-9+_.-]+@(.+)$",
+        message = "Email format not accepted"
+    )
     private String email;
 
     private String password;

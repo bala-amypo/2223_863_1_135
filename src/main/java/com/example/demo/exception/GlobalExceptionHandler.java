@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.AccessDeniedException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -37,6 +38,13 @@ public class GlobalExceptionHandler {
                         "status", ex.getStatusCode().value(),
                         "error", ex.getReason()
                 ));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<?> handleAccessDenied() {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body("Access denied: insufficient permissions");
     }
 
     // ✅ ADD THIS: IllegalArgumentException → 400
