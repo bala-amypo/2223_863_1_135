@@ -10,7 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
-
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -31,7 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public User register(@RequestBody RegisterRequest request) {
+    public User register(@Valid @RequestBody RegisterRequest request) {
 
         User user = new User();
         user.setFullName(request.getFullName());
@@ -48,36 +48,35 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
-    User user = userService.findByEmail(request.getEmail());
+        User user = userService.findByEmail(request.getEmail());
 
-    if (user == null) {
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Invalid credentials"));
+        if (user == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid credentials"));
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Invalid credentials"));
+        }
+
+        String token = jwtUtil.generateToken(
+                user.getId(),
+                user.getEmail(),
+                user.getRole().name()
+        );
+
+        return ResponseEntity.ok(
+                Map.of(
+                    "token", token,
+                    "userId", user.getId(),
+                    "email", user.getEmail(),
+                    "role", user.getRole().name()
+                )
+        );
     }
-
-    if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Invalid credentials"));
-    }
-
-    String token = jwtUtil.generateToken(
-            user.getId(),
-            user.getEmail(),
-            user.getRole().name()
-    );
-
-    return ResponseEntity.ok(
-            Map.of(
-                "token", token,
-                "userId", user.getId(),
-                "email", user.getEmail(),
-                "role", user.getRole().name()
-            )
-    );
-}
-
 }
